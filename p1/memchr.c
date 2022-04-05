@@ -28,64 +28,64 @@
 #define DETECT_CHAR(X, MASK) (DETECT_NULL(X ^ MASK))
 
 void *memchr_opt(const void *src_void, int c, size_t length) {
-  const unsigned char *src = (const unsigned char *)src_void;
-  unsigned char d = c;
+    const unsigned char *src = (const unsigned char *)src_void;
+    unsigned char d = c;
 
-  while (UNALIGNED(src)) {
-    if (!length--)
-      return NULL;
-    if (*src == d)
-      return (void *)src;
-    src++;
-  }
-
-  if (!TOO_SMALL(length)) {
-    /* If we get this far, we know that length is large and
-     * src is word-aligned.
-     */
-
-    /* The fast code reads the source one word at a time and only performs
-     * the bytewise search on word-sized segments if they contain the search
-     * character, which is detected by XORing the word-sized segment with a
-     * word-sized block of the search character and then detecting for the
-     * presence of NULL in the result.
-     */
-    unsigned long *asrc = (unsigned long *)src;
-    unsigned long mask = d << 8 | d;
-    mask = mask << 16 | mask;
-    for (unsigned int i = 32; i < LBLOCKSIZE * 8; i <<= 1)
-      mask = (mask << i) | mask;
-
-    while (length >= LBLOCKSIZE) {
-      /* XXXXX: Your implementation should appear here */
-      if (DETECT_CHAR(*asrc, mask))
-        break;
-      else {
-        asrc++;
-        length -= LBLOCKSIZE;
-      }
+    while (UNALIGNED(src)) {
+        if (!length--)
+            return NULL;
+        if (*src == d)
+            return (void *)src;
+        src++;
     }
 
-    /* If there are fewer than LBLOCKSIZE characters left, then we resort to
-     * the bytewise loop.
-     */
-    src = (unsigned char *)asrc;
-  }
+    if (!TOO_SMALL(length)) {
+        /* If we get this far, we know that length is large and
+         * src is word-aligned.
+         */
 
-  while (length--) {
-    if (*src == d)
-      return (void *)src;
-    src++;
-  }
+        /* The fast code reads the source one word at a time and only performs
+         * the bytewise search on word-sized segments if they contain the search
+         * character, which is detected by XORing the word-sized segment with a
+         * word-sized block of the search character and then detecting for the
+         * presence of NULL in the result.
+         */
+        unsigned long *asrc = (unsigned long *)src;
+        unsigned long mask = d << 8 | d;
+        mask = mask << 16 | mask;
+        for (unsigned int i = 32; i < LBLOCKSIZE * 8; i <<= 1)
+            mask = (mask << i) | mask;
 
-  return NULL;
+        while (length >= LBLOCKSIZE) {
+            /* XXXXX: Your implementation should appear here */
+            if (DETECT_CHAR(*asrc, mask))
+                break;
+            else {
+                asrc++;
+                length -= LBLOCKSIZE;
+            }
+        }
+
+        /* If there are fewer than LBLOCKSIZE characters left, then we resort to
+         * the bytewise loop.
+         */
+        src = (unsigned char *)asrc;
+    }
+
+    while (length--) {
+        if (*src == d)
+            return (void *)src;
+        src++;
+    }
+
+    return NULL;
 }
 
 int main() {
-  const char str[] = "http://wiki.csie.ncku.edu.tw";
-  const char ch = '.';
+    const char str[] = "http://wiki.csie.ncku.edu.tw";
+    const char ch = '.';
 
-  char *ret = memchr_opt(str, ch, strlen(str));
-  printf("String after |%c| is - |%s|\n", ch, ret);
-  return 0;
+    char *ret = memchr_opt(str, ch, strlen(str));
+    printf("String after |%c| is - |%s|\n", ch, ret);
+    return 0;
 }
